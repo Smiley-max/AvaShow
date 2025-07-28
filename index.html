@@ -1,46 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="da">
 <head>
-  <title>🎲 40 Tilfældige Roblox-avatarer</title>
+  <meta charset="UTF-8">
+  <title>✨ Ava Show</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f2f2f2;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(120deg, #f0f8ff, #d1e7ff);
+      color: #333;
       text-align: center;
+      margin: 0;
+      padding: 0;
     }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 3rem;
+      background: linear-gradient(to right, #ff66c4, #33ccff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: bold;
+    }
+
+    .button-row {
+      margin: 20px;
+    }
+
+    button {
+      background-color: #0099ff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 5px;
+      font-size: 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0077cc;
+      transform: scale(1.05);
+    }
+
     .avatar-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 10px;
-      max-width: 1000px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 15px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 20px;
     }
+
     .avatar-card {
       background: white;
+      border-radius: 15px;
       padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
     }
+
+    .avatar-card:hover {
+      transform: translateY(-5px);
+    }
+
     img {
       border-radius: 50%;
       width: 100px;
       height: 100px;
+      object-fit: cover;
+      margin-bottom: 10px;
       cursor: pointer;
     }
-    button {
-      margin: 20px 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
+
+    p {
+      font-weight: bold;
+      margin: 0;
     }
   </style>
 </head>
 <body>
 
-  <h1>🎲 40 Tilfældige Roblox-avatarer</h1>
-  <button onclick="loadAvatars()">🔁 Vis første 40</button>
-  <button onclick="loadAvatars()">⏭️ NÆSTE</button>
+  <h1>✨ Ava Show</h1>
+  <div class="button-row">
+    <button onclick="loadAvatars()">🔁 Vis 40 avatarer</button>
+    <button onclick="loadAvatars()">⏭️ NÆSTE</button>
+  </div>
   <div class="avatar-grid" id="avatarGrid"></div>
 
   <script>
@@ -64,38 +109,46 @@
       grid.innerHTML = "";
 
       let shown = 0;
-      while (shown < 40) {
-        const userId = Math.floor(Math.random() * (2000000000 - 40000)) + 40000; // ALTID over 40000
-        const avatarUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
+      let tries = 0;
+      const maxTries = 300; // så vi undgår uendelig løkke
 
-        if (avatarUrl === worldVillageAvatarURL) continue;
-
-        const card = document.createElement("div");
-        card.className = "avatar-card";
-
-        const img = document.createElement("img");
-        img.src = avatarUrl;
-        img.onclick = () => window.open(`https://www.roblox.com/users/${userId}/profile`, "_blank");
-
-        const name = document.createElement("p");
-        name.innerText = "Indlæser...";
-
-        card.appendChild(img);
-        card.appendChild(name);
-        grid.appendChild(card);
+      while (shown < 40 && tries < maxTries) {
+        tries++;
+        const userId = Math.floor(Math.random() * (2000000000 - 40000)) + 40000;
 
         try {
           const res = await fetch(`https://users.roblox.com/v1/users/${userId}`);
-          const data = await res.json();
-          name.innerText = data.name ?? "Ukendt";
-        } catch {
-          name.innerText = "❌ Ikke fundet";
-        }
+          if (!res.ok) continue;
 
-        shown++;
+          const userData = await res.json();
+          if (userData.isBanned) continue;
+
+          const avatarUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
+          if (avatarUrl === worldVillageAvatarURL) continue;
+
+          const card = document.createElement("div");
+          card.className = "avatar-card";
+
+          const img = document.createElement("img");
+          img.src = avatarUrl;
+          img.alt = "Avatar";
+          img.onclick = () => window.open(`https://www.roblox.com/users/${userId}/profile`, "_blank");
+
+          const name = document.createElement("p");
+          name.innerText = userData.name ?? "Ukendt";
+
+          card.appendChild(img);
+          card.appendChild(name);
+          grid.appendChild(card);
+
+          shown++;
+        } catch {
+          continue;
+        }
       }
     }
 
+    // Start Ava Show!
     getWorldVillageAvatar().then(loadAvatars);
   </script>
 </body>
