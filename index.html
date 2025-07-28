@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="UTF-8">
-  <title>✨ Ava Show</title>
+  <meta charset="UTF-8" />
+  <title>✨ Ava Show™</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -81,7 +81,7 @@
 </head>
 <body>
 
-  <h1>✨ Ava Show</h1>
+  <h1>✨ Ava Show™</h1>
   <div class="button-row">
     <button onclick="loadAvatars()">🔁 Vis 40 avatarer</button>
     <button onclick="loadAvatars()">⏭️ NÆSTE</button>
@@ -110,7 +110,7 @@
 
       let shown = 0;
       let tries = 0;
-      const maxTries = 300; // så vi undgår uendelig løkke
+      const maxTries = 300;
 
       while (shown < 40 && tries < maxTries) {
         tries++;
@@ -148,8 +148,11 @@
       }
     }
 
-    // Start Ava Show!
-    getWorldVillageAvatar().then(loadAvatars);
+    // Kør automatisk ved sideindlæsning
+    window.onload = async () => {
+      await getWorldVillageAvatar();
+      loadAvatars();
+    };
   </script>
 </body>
 </html>
