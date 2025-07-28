@@ -1,165 +1,169 @@
 <!DOCTYPE html>
 <html lang="da">
 <head>
-  <meta charset="UTF-8" />
-  <title>✨ Ava Show™</title>
+  <meta charset="UTF-8">
+  <title>Ava Show™</title>
   <style>
     body {
+      background: linear-gradient(to right, #d3eafd, #ffffff);
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(120deg, #f0f8ff, #d1e7ff);
-      color: #333;
       text-align: center;
-      margin: 0;
-      padding: 0;
+      padding: 20px;
     }
     h1 {
-      margin-top: 30px;
-      font-size: 3rem;
-      background: linear-gradient(to right, #ff66c4, #33ccff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: bold;
+      font-size: 3em;
+      margin-bottom: 10px;
     }
-    .button-row {
-      margin: 20px;
-    }
-    button {
-      background-color: #0099ff;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      margin: 5px;
-      font-size: 16px;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: transform 0.2s, background-color 0.3s;
-    }
-    button:hover {
-      background-color: #0077cc;
-      transform: scale(1.05);
-    }
-    .avatar-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 15px;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px;
-      min-height: 300px;
+    #avatars {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
     }
     .avatar-card {
-      background: white;
-      border-radius: 15px;
-      padding: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
-    .avatar-card:hover {
-      transform: translateY(-5px);
-    }
-    img {
-      border-radius: 50%;
       width: 100px;
       height: 100px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .avatar-card img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      margin-bottom: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 8px;
+      background-color: #4a90e2;
+      color: white;
       cursor: pointer;
+      transition: background-color 0.2s;
     }
-    p {
-      font-weight: bold;
-      margin: 0;
-    }
-    #loadingText {
-      font-size: 1.2rem;
-      margin-top: 30px;
-      color: #555;
+    button:hover {
+      background-color: #3d7bc4;
     }
   </style>
 </head>
 <body>
-
-  <h1>✨ Ava Show™</h1>
-  <div class="button-row">
-    <button onclick="loadAvatars()">🔁 Vis 40 avatarer</button>
-    <button onclick="loadAvatars()">⏭️ NÆSTE</button>
-  </div>
-  <div id="loadingText">Indlæser avatarer…</div>
-  <div class="avatar-grid" id="avatarGrid"></div>
+  <h1>✨ Ava Show™ ✨</h1>
+  <div id="avatars"></div>
+  <button id="next">Næste 40</button>
 
   <script>
-    let worldVillageAvatarURL = "";
+    let avatarBuffer = [];
+    let currentPage = 0;
+    let currentUserId = 40000;
+    const shownHashes = new Set();
 
-    async function getWorldVillageAvatar() {
-      console.log("Henter WorldVillage avatar...");
-      const res = await fetch("https://users.roblox.com/v1/usernames/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernames: ["WorldVillage"] })
-      });
-      const data = await res.json();
-      const userId = data.data[0]?.id;
-      if (userId) {
-        worldVillageAvatarURL = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
-        console.log("WorldVillage avatar URL fundet:", worldVillageAvatarURL);
-      } else {
-        console.warn("Kunne ikke finde WorldVillage userId!");
+    const bannedIds = new Set(); // Brug til at gemme IDs som ikke virker
+
+    const worldVillageAvatarHash = "hash_will_be_loaded";
+    const avatarContainer = document.getElementById("avatars");
+
+    // Loader WorldVillage-avatarens billede én gang
+    let worldVillageHash = null;
+    async function fetchWorldVillageHash() {
+      const id = await getUserId("WorldVillage");
+      const hash = await getAvatarHash(id);
+      worldVillageHash = hash;
+    }
+
+    async function getUserId(username) {
+      try {
+        const res = await fetch(`https://users.roblox.com/v1/usernames/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usernames: [username] })
+        });
+        const data = await res.json();
+        return data.data[0]?.id;
+      } catch {
+        return null;
       }
     }
 
-    async function loadAvatars() {
-      const grid = document.getElementById("avatarGrid");
-      const loadingText = document.getElementById("loadingText");
-      grid.innerHTML = "";
-      loadingText.style.display = "block";
-      loadingText.innerText = "Indlæser avatarer…";
+    async function getAvatarHash(userId) {
+      try {
+        const res = await fetch(`https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=100x100&format=Png`);
+        const data = await res.json();
+        return data.data[0]?.imageUrl;
+      } catch {
+        return null;
+      }
+    }
 
-      let shown = 0;
+    async function fetchUser(userId) {
+      try {
+        const res = await fetch(`https://users.roblox.com/v1/users/${userId}`);
+        if (!res.ok) throw new Error();
+        const avatarRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar?userIds=${userId}&size=100x100&format=Png`);
+        const avatarData = await avatarRes.json();
+        const avatarUrl = avatarData.data[0]?.imageUrl;
+
+        if (!avatarUrl || avatarUrl === worldVillageHash) return null;
+
+        const hash = avatarUrl.split("/").pop();
+        if (shownHashes.has(hash)) return null;
+        shownHashes.add(hash);
+
+        return { id: userId, avatar: avatarUrl };
+      } catch {
+        bannedIds.add(userId);
+        return null;
+      }
+    }
+
+    async function fetchBatch(amount = 76) {
+      const newAvatars = [];
       let tries = 0;
-      const maxTries = 400;
-
-      while (shown < 40 && tries < maxTries) {
+      while (newAvatars.length < amount && tries < amount * 5) {
+        const user = await fetchUser(currentUserId++);
+        if (user) newAvatars.push(user);
         tries++;
-        const userId = Math.floor(Math.random() * (2000000000 - 40000)) + 40000;
-
-        try {
-          const res = await fetch(`https://users.roblox.com/v1/users/${userId}`);
-          if (!res.ok) continue;
-
-          const userData = await res.json();
-          if (userData.isBanned) continue;
-
-          const avatarUrl = `https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=420&height=420&format=png`;
-          if (avatarUrl === worldVillageAvatarURL) continue;
-
-          const card = document.createElement("div");
-          card.className = "avatar-card";
-
-          const img = document.createElement("img");
-          img.src = avatarUrl;
-          img.alt = "Avatar";
-          img.onclick = () => window.open(`https://www.roblox.com/users/${userId}/profile`, "_blank");
-
-          const name = document.createElement("p");
-          name.innerText = userData.name ?? "Ukendt";
-
-          card.appendChild(img);
-          card.appendChild(name);
-          grid.appendChild(card);
-
-          shown++;
-        } catch {
-          continue;
-        }
       }
-      loadingText.style.display = "none";
-      console.log(`Viste ${shown} avatarer efter ${tries} forsøg.`);
+      avatarBuffer.push(...newAvatars);
     }
 
-    // Vent på avatar-URL, før vi loader
-    window.onload = async () => {
-      await getWorldVillageAvatar();
-      await loadAvatars();
-    };
+    function showPage(page) {
+      avatarContainer.innerHTML = "";
+      const start = page * 40;
+      const end = start + 40;
+      const toShow = avatarBuffer.slice(start, end);
+      for (const user of toShow) {
+        const div = document.createElement("div");
+        div.className = "avatar-card";
+        const img = document.createElement("img");
+        img.src = user.avatar;
+        div.appendChild(img);
+        avatarContainer.appendChild(div);
+      }
+
+      // Hvis vi nærmer os slutningen, hent mere
+      if (avatarBuffer.length - end < 20) {
+        fetchBatch(76);
+      }
+    }
+
+    document.getElementById("next").addEventListener("click", () => {
+      currentPage++;
+      showPage(currentPage);
+    });
+
+    // Init
+    (async () => {
+      await fetchWorldVillageHash();
+      await fetchBatch(76);
+      showPage(0);
+    })();
   </script>
 </body>
 </html>
